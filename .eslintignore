@@ -1,0 +1,12 @@
+/dist
+/node_modules
+/src/decoration.d.ts
+/src/tinymce
+/demo/tinymce
+/public
+.eslintrc.js
+*.md
+*.json
+package.json
+postcss.config.js
+webpack.config.js
