@@ -14,7 +14,7 @@ module.exports = env => {
   }
   return {
     mode: env.NODE_ENV, // none production development
-    devtool: isDevelopment ? 'inline-source-map' : 'source-map',
+    devtool: isDevelopment ? 'inline-source-map' : false, // 'source-map'
     optimization: {
       minimize: !isDevelopment,
       minimizer: [
@@ -24,13 +24,13 @@ module.exports = env => {
       splitChunks: {
         chunks: 'all', // 提取公共模块 loadash
         name: false,
-        cacheGroups: {
-          defaultVendors: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
+        // cacheGroups: {
+        //   defaultVendors: {
+        //     test: /[\\/]node_modules[\\/]/,
+        //     name: 'vendors',
+        //     chunks: 'all',
+        //   },
+        // },
       },
       // runtimeChunk: 'single' // 提取引导模板 将 runtime 代码拆分为一个单独的 chunk 容易引起react 报错
     },
@@ -59,7 +59,7 @@ module.exports = env => {
         name: 'myLibrary',
         type: 'umd',
       },
-        // Prevents conflicts when multiple webpack runtimes (from different apps)
+      // Prevents conflicts when multiple webpack runtimes (from different apps)
       // are used on the same page.
       chunkLoadingGlobal: `webpackJsonp${packageInfo.name}`,
       // this defaults to 'window', but by setting it to 'this' then
@@ -170,12 +170,12 @@ module.exports = env => {
     },
     resolve: {
       alias: {
-        'src@': path.resolve(__dirname, './src'),
+        '@': path.resolve(__dirname, './src'),
       },
       // 按顺序解析，碰到这些后缀名，可以不写
       extensions: ['.tsx', '.ts', '.js'],
     },
-    externals: isDevelopment|| isBuildDemo
+    externals: isDevelopment || isBuildDemo
       ? {}
       : {
         react: {

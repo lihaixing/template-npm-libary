@@ -7,6 +7,7 @@
   "scripts": {
     "build": "npx webpack --env NODE_ENV=production",
     "buildDemo": "npx webpack --env NODE_ENV=production entry=demo",
+    "buildDev": "npx webpack --env NODE_ENV=development",
     "start": "webpack serve --env NODE_ENV=development",
     "beta": "npm version prerelease --preid=beta && npm publish --tag beta"
   },
