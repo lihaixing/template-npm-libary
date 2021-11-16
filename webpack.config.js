@@ -3,15 +3,24 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const ReactRefreshTypeScript = require('react-refresh-typescript');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const webpack = require('webpack');
 const packageInfo = require('./package.json');
 module.exports = env => {
   const isDevelopment = env.NODE_ENV !== 'production';
+  const isBuildDemo = env.entry === 'demo';
+  const entry = {
+    index: isDevelopment || isBuildDemo ? './demo/index.tsx' : './src/index.tsx',
+  }
   return {
     mode: env.NODE_ENV, // none production development
     devtool: isDevelopment ? 'inline-source-map' : 'source-map',
     optimization: {
       minimize: !isDevelopment,
+      minimizer: [
+        `...`,
+        !isDevelopment && new CssMinimizerPlugin(),
+      ].filter(Boolean),
       splitChunks: {
         chunks: 'all', // 提取公共模块 loadash
         name: false,
@@ -27,7 +36,7 @@ module.exports = env => {
     },
     devServer: isDevelopment
       ? {
-        static: './demo',
+        static: './public',
         open: true,
         hot: true, // 模块热更新 loader会自动处理热更新，官网配置比较多，也说明了这一点
         host: 'localhost',
@@ -39,30 +48,35 @@ module.exports = env => {
         },
       }
       : undefined,
-    entry: {
-      index: isDevelopment ? './demo/index.tsx' : './src/index.tsx',
-    },
+    entry,
     output: {
       clean: true,
       filename: isDevelopment ? '[name].bundle.js' : '[name].js', // content hash 内容变化才会变化
       chunkFilename: '[name].[contenthash].js',
+      assetModuleFilename: 'images/[hash][ext][query]',
       // 暴露 library 这是库名称 import from 'webpackNumbers'
       library: {
-        name: 'xyEditor',
+        name: 'myLibrary',
         type: 'umd',
       },
+        // Prevents conflicts when multiple webpack runtimes (from different apps)
+      // are used on the same page.
+      chunkLoadingGlobal: `webpackJsonp${packageInfo.name}`,
+      // this defaults to 'window', but by setting it to 'this' then
+      // module chunks which are built will work in web workers as well.
+      globalObject: 'this',
     },
     plugins: [
-      isDevelopment &&
+      (isDevelopment || isBuildDemo) &&
       new HtmlWebpackPlugin({
-        title: '小鱼富文本编辑器',
-        template: './demo/index.html',
+        title: 'react组件库',
+        template: './public/index.html',
       }),
       isDevelopment && new ReactRefreshWebpackPlugin(),
       !isDevelopment &&
       new MiniCssExtractPlugin({
-        filename: 'css/xyEditor.css',
-        chunkFilename: 'css/xyEditor.css',
+        filename: 'css/index.css',
+        chunkFilename: 'css/index.css',
       }),
       !isDevelopment &&
       new webpack.BannerPlugin(`package version: ${packageInfo.version}`),
@@ -96,6 +110,27 @@ module.exports = env => {
             'sass-loader',
           ].filter(Boolean),
         },
+        // {
+        //   test: /\.less$/,
+        //   sideEffects: true,
+        //   use: [
+        //     isDevelopment ? 'style-loader' : { loader: MiniCssExtractPlugin.loader },
+        //     {
+        //       loader: 'css-loader',
+        //       options: {
+        //       },
+        //     },
+        //     'postcss-loader',
+        //     {
+        //       loader: 'less-loader',
+        //       options: {
+        //         lessOptions:{
+        //           javascriptEnabled:true
+        //         }
+        //       },
+        //     }
+        //   ].filter(Boolean),
+        // },
         {
           test: /\.(png|svg|jpg|jpeg|gif)$/i,
           type: 'asset/resource',
@@ -140,7 +175,7 @@ module.exports = env => {
       // 按顺序解析，碰到这些后缀名，可以不写
       extensions: ['.tsx', '.ts', '.js'],
     },
-    externals: isDevelopment
+    externals: isDevelopment|| isBuildDemo
       ? {}
       : {
         react: {
