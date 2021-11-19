@@ -4,6 +4,7 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const ReactRefreshTypeScript = require('react-refresh-typescript');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+
 const webpack = require('webpack');
 const packageInfo = require('./package.json');
 module.exports = env => {
@@ -36,7 +37,7 @@ module.exports = env => {
     },
     devServer: isDevelopment
       ? {
-        static: './public',
+        static: './dist',
         open: true,
         hot: true, // 模块热更新 loader会自动处理热更新，官网配置比较多，也说明了这一点
         host: 'localhost',
@@ -50,6 +51,7 @@ module.exports = env => {
       : undefined,
     entry,
     output: {
+      path: path.resolve(__dirname, 'dist'),
       clean: true,
       filename: isDevelopment ? '[name].bundle.js' : '[name].js', // content hash 内容变化才会变化
       chunkFilename: '[name].[contenthash].js',
@@ -133,7 +135,7 @@ module.exports = env => {
         // },
         {
           test: /\.(png|svg|jpg|jpeg|gif)$/i,
-          type: 'asset/resource',
+          type: 'asset/inline',
         },
         {
           test: /\.[jt]sx?$/,
@@ -173,7 +175,7 @@ module.exports = env => {
         '@': path.resolve(__dirname, './src'),
       },
       // 按顺序解析，碰到这些后缀名，可以不写
-      extensions: ['.tsx', '.ts', '.js'],
+      extensions: ['.tsx', '.ts','.jsx', '.js'],
     },
     externals: isDevelopment || isBuildDemo
       ? {}
