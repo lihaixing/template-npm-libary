@@ -4,6 +4,7 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const ReactRefreshTypeScript = require('react-refresh-typescript');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+// const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const webpack = require('webpack');
 const packageInfo = require('./package.json');
@@ -32,12 +33,14 @@ module.exports = env => {
         //     chunks: 'all',
         //   },
         // },
+        // runtimeChunk: 'single' // 提取引导模板 将 runtime 代码拆分为一个单独的 chunk 容易引起react 报错
       },
-      // runtimeChunk: 'single' // 提取引导模板 将 runtime 代码拆分为一个单独的 chunk 容易引起react 报错
     },
     devServer: isDevelopment
       ? {
-        static: './dist',
+        static: './static',
+        //When using the HTML5 History API, the index.html page will likely have to be served in place of any 404 responses. Enable devServer.historyApiFallback by setting it to true:
+        historyApiFallback: true,
         open: true,
         hot: true, // 模块热更新 loader会自动处理热更新，官网配置比较多，也说明了这一点
         host: 'localhost',
@@ -53,17 +56,17 @@ module.exports = env => {
     output: {
       path: path.resolve(__dirname, 'dist'),
       clean: true,
-      filename: isDevelopment ? '[name].bundle.js' : '[name].js', // content hash 内容变化才会变化
+      filename: '[name].js', // content hash 内容变化才会变化
       chunkFilename: '[name].[contenthash].js',
       assetModuleFilename: 'images/[hash][ext][query]',
       // 暴露 library 这是库名称 import from 'webpackNumbers'
       library: {
-        name: 'myLibrary',
+        name: 'template-npm-library',
         type: 'umd',
       },
       // Prevents conflicts when multiple webpack runtimes (from different apps)
       // are used on the same page.
-      chunkLoadingGlobal: `webpackJsonp${packageInfo.name}`,
+      // chunkLoadingGlobal: `webpackJsonp${packageInfo.name}`,
       // this defaults to 'window', but by setting it to 'this' then
       // module chunks which are built will work in web workers as well.
       globalObject: 'this',
@@ -77,14 +80,18 @@ module.exports = env => {
       isDevelopment && new ReactRefreshWebpackPlugin(),
       !isDevelopment &&
       new MiniCssExtractPlugin({
-        filename: 'css/index.css',
-        chunkFilename: 'css/index.css',
+        filename: 'css/[name].css',
+        chunkFilename: 'css/[name].[contenthash].css',
       }),
       !isDevelopment &&
       new webpack.BannerPlugin(`package version: ${packageInfo.version}`),
       new webpack.DefinePlugin({
         'process.env.version': JSON.stringify(packageInfo.version),
         'process.env.PUBLIC_URL': JSON.stringify('.'),
+      }),
+      // 禁掉splitchuncks https://github.com/webpack/webpack/issues/11431
+      new webpack.optimize.LimitChunkCountPlugin({
+        maxChunks: 1,
       }),
     ].filter(Boolean),
     module: {
@@ -151,7 +158,7 @@ module.exports = env => {
         },
         {
           test: /\.(woff|woff2|eot|ttf|otf)$/,
-          type: 'asset/resource',
+          type: 'asset/inline',
         },
         {
           test: /\.tsx?$/,
@@ -175,7 +182,7 @@ module.exports = env => {
         '@': path.resolve(__dirname, './src'),
       },
       // 按顺序解析，碰到这些后缀名，可以不写
-      extensions: ['.tsx', '.ts','.jsx', '.js'],
+      extensions: ['.tsx', '.ts', '.jsx', '.js'],
     },
     externals: isDevelopment || isBuildDemo
       ? {}
@@ -193,5 +200,5 @@ module.exports = env => {
       // cacheDirectory 默认路径是 node_modules/.cache/webpack
       cacheDirectory: path.resolve(__dirname, '.temp_cache'),
     },
-  };
-};
+  }
+}
