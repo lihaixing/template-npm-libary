@@ -4,6 +4,9 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const ReactRefreshTypeScript = require('react-refresh-typescript');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+// var LodashModuleReplacementPlugin = require('lodash-webpack-plugin')
+
 // const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const webpack = require('webpack');
@@ -67,9 +70,11 @@ module.exports = env => {
       // Prevents conflicts when multiple webpack runtimes (from different apps)
       // are used on the same page.
       // chunkLoadingGlobal: `webpackJsonp${packageInfo.name}`,
+
       // this defaults to 'window', but by setting it to 'this' then
       // module chunks which are built will work in web workers as well.
-      globalObject: 'this',
+      // globalObject: 'this', // 当输出为 library 时，尤其是当 libraryTarget 为 'umd'时，此选项将决定使用哪个全局对象来挂载 library。为了使 UMD 构建在浏览器和 Node.js 上均可用，应将 output.globalObject 选项设置为 'this'。对于类似 web 的目标，默认为 self。
+
     },
     plugins: [
       (isDevelopment || isBuildDemo) &&
@@ -80,6 +85,7 @@ module.exports = env => {
       isDevelopment && new ReactRefreshWebpackPlugin(),
       !isDevelopment &&
       new MiniCssExtractPlugin({
+        ignoreOrder: true, // 去除css警告
         filename: 'css/[name].css',
         chunkFilename: 'css/[name].[contenthash].css',
       }),
@@ -93,6 +99,15 @@ module.exports = env => {
       new webpack.optimize.LimitChunkCountPlugin({
         maxChunks: 1,
       }),
+
+      // !isDevelopment && new BundleAnalyzerPlugin(),
+
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^\.\/locale$/,
+        contextRegExp: /moment$/,
+      }), // moment 2.18需要
+      // new LodashModuleReplacementPlugin() // lodash按需加载 https://juejin.cn/post/6844904087088021511
+
     ].filter(Boolean),
     module: {
       rules: [
@@ -133,8 +148,13 @@ module.exports = env => {
         //     {
         //       loader: 'less-loader',
         //       options: {
-        //         lessOptions:{
-        //           javascriptEnabled:true
+        //         lessOptions: {
+        //           javascriptEnabled: true,
+        //           modifyVars: {
+        //             "primary-color": "#3876ff",
+        //             "font-size-base": "12px",
+        //             "border-radius-base": "3px"
+        //           }
         //         }
         //       },
         //     }
@@ -160,6 +180,12 @@ module.exports = env => {
           test: /\.(woff|woff2|eot|ttf|otf)$/,
           type: 'asset/inline',
         },
+        // {
+        //   test: /\.(js|jsx)$/,
+        //   loader: 'babel-loader',
+        //   include: /node_modules/,
+        //   options: { plugins: ['lodash'] }
+        // },
         {
           test: /\.tsx?$/,
           exclude: /node_modules/,
@@ -170,7 +196,7 @@ module.exports = env => {
                 getCustomTransformers: () => ({
                   before: [isDevelopment && ReactRefreshTypeScript()].filter(Boolean),
                 }),
-                transpileOnly: isDevelopment,
+                // transpileOnly: isDevelopment,
               },
             },
           ],
@@ -185,20 +211,14 @@ module.exports = env => {
       extensions: ['.tsx', '.ts', '.jsx', '.js'],
     },
     externals: isDevelopment || isBuildDemo
-      ? {}
-      : {
-        react: {
-          root: 'React',
-          commonjs2: 'react',
-          commonjs: 'react',
-          amd: 'react',
-        },
-      },
+      ? []
+      : ['react', 'react-dom'],
     // 持久缓存，存到了文件系统中，不容易失效，二次构建速度明显提升
     cache: {
       type: 'filesystem',
       // cacheDirectory 默认路径是 node_modules/.cache/webpack
       cacheDirectory: path.resolve(__dirname, '.temp_cache'),
     },
+    target: ['web', 'es5']
   }
 }
