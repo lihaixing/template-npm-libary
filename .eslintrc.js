@@ -20,5 +20,8 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'warn', // Checks effect dependencies
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-this-alias': 'off',
+    '@typescript-eslint/no-empty-function': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
+    'no-empty': 'off',
   },
 };
